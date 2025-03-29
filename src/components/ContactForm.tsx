@@ -1,7 +1,136 @@
 import { useState } from 'react';
 import { Mail, Github, Linkedin, Twitter, ExternalLink, Calendar, FileText, MessageSquare, Link } from 'lucide-react';
 
-const ContactForm = () => {
+// Define types for our data structures
+interface ContactMethod {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  url: string;
+  color: string;
+}
+
+interface AdditionalContact {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  url: string;
+  color: string;
+}
+
+// Extract component for contact method cards
+const ContactMethodCard: React.FC<ContactMethod> = ({ 
+  title, 
+  description, 
+  icon, 
+  url, 
+  color 
+}) => (
+  <a 
+    href={url} 
+    target={url.startsWith('mailto:') ? '_self' : '_blank'} 
+    rel="noopener noreferrer"
+    className={`group flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-${color}-900/10 to-${color}-800/5 border border-${color}-900/20 hover:border-${color}-700/30 transition-all duration-300`}
+  >
+    <div className={`h-14 w-14 rounded-full bg-${color}-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+      {icon}
+    </div>
+    <h3 className="font-medium text-white mb-2">{title}</h3>
+    <p className="text-sm text-gray-400 text-center break-all">{description}</p>
+  </a>
+);
+
+// Extract component for additional contact option cards
+const AdditionalContactCard: React.FC<AdditionalContact> = ({
+  title,
+  description,
+  icon,
+  url,
+  color
+}) => (
+  <a 
+    href={url} 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="flex items-center gap-3 p-4 rounded-lg bg-gray-900/50 border border-gray-800 hover:border-gray-700 transition-colors duration-300"
+  >
+    <div className={`h-10 w-10 rounded-full bg-${color}-500/10 flex items-center justify-center flex-shrink-0`}>
+      {icon}
+    </div>
+    <div>
+      <h4 className="text-white font-medium">{title}</h4>
+      <p className="text-xs text-gray-400">{description}</p>
+    </div>
+  </a>
+);
+
+const ContactForm: React.FC = () => {
+  // Define contact methods data
+  const contactMethods: ContactMethod[] = [
+    {
+      id: 'email',
+      title: 'Email',
+      description: 'vivekrohtasvi2002@gmail.com',
+      icon: <Mail className="text-blue-400" size={24} />,
+      url: 'mailto:vivekrohtasvi2002@gmail.com',
+      color: 'blue'
+    },
+    {
+      id: 'github',
+      title: 'GitHub',
+      description: 'Check out my projects',
+      icon: <Github className="text-purple-400" size={24} />,
+      url: 'https://github.com/Vrohs',
+      color: 'purple'
+    },
+    {
+      id: 'linkedin',
+      title: 'LinkedIn',
+      description: 'Connect professionally',
+      icon: <Linkedin className="text-cyan-400" size={24} />,
+      url: 'https://www.linkedin.com/in/vivek-rohtasvi-20897b202/',
+      color: 'cyan'
+    },
+    {
+      id: 'twitter',
+      title: 'Twitter',
+      description: 'Follow for updates',
+      icon: <Twitter className="text-pink-400" size={24} />,
+      url: 'https://x.com/rohsfr',
+      color: 'pink'
+    }
+  ];
+
+  // Define additional contact options data
+  const additionalContacts: AdditionalContact[] = [
+    {
+      id: 'calendly',
+      title: 'Schedule a Call',
+      description: 'Book a time on my calendar',
+      icon: <Calendar className="text-emerald-400" size={18} />,
+      url: 'https://calendly.com',
+      color: 'emerald'
+    },
+    {
+      id: 'resume',
+      title: 'Download CV',
+      description: 'Get my resume',
+      icon: <FileText className="text-amber-400" size={18} />,
+      url: '/resume.pdf',
+      color: 'amber'
+    },
+    {
+      id: 'discord',
+      title: 'Discord',
+      description: 'Join my community',
+      icon: <MessageSquare className="text-indigo-400" size={18} />,
+      url: 'https://discord.gg/your-discord',
+      color: 'indigo'
+    }
+  ];
+
   return (
     <div className="relative">
       {/* Background gradient animation */}
@@ -23,59 +152,9 @@ const ContactForm = () => {
         
         {/* Contact Methods Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {/* Email */}
-          <a 
-            href="mailto:vivekrohtasvi2002@gmail.com" 
-            className="group flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-blue-900/10 to-blue-800/5 border border-blue-900/20 hover:border-blue-700/30 transition-all duration-300"
-          >
-            <div className="h-14 w-14 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-              <Mail className="text-blue-400" size={24} />
-            </div>
-            <h3 className="font-medium text-white mb-2">Email</h3>
-            <p className="text-sm text-gray-400 text-center break-all">vivekrohtasvi2002@gmail.com</p>
-          </a>
-          
-          {/* GitHub */}
-          <a 
-            href="https://github.com/Vrohs" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="group flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-purple-900/10 to-purple-800/5 border border-purple-900/20 hover:border-purple-700/30 transition-all duration-300"
-          >
-            <div className="h-14 w-14 rounded-full bg-purple-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-              <Github className="text-purple-400" size={24} />
-            </div>
-            <h3 className="font-medium text-white mb-2">GitHub</h3>
-            <p className="text-sm text-gray-400 text-center">Check out my projects</p>
-          </a>
-          
-          {/* LinkedIn */}
-          <a 
-            href="https://www.linkedin.com/in/vivek-rohtasvi-20897b202/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="group flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-cyan-900/10 to-cyan-800/5 border border-cyan-900/20 hover:border-cyan-700/30 transition-all duration-300"
-          >
-            <div className="h-14 w-14 rounded-full bg-cyan-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-              <Linkedin className="text-cyan-400" size={24} />
-            </div>
-            <h3 className="font-medium text-white mb-2">LinkedIn</h3>
-            <p className="text-sm text-gray-400 text-center">Connect professionally</p>
-          </a>
-          
-          {/* Twitter/X */}
-          <a 
-            href="https://x.com/rohsfr" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="group flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-pink-900/10 to-pink-800/5 border border-pink-900/20 hover:border-pink-700/30 transition-all duration-300"
-          >
-            <div className="h-14 w-14 rounded-full bg-pink-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-              <Twitter className="text-pink-400" size={24} />
-            </div>
-            <h3 className="font-medium text-white mb-2">Twitter</h3>
-            <p className="text-sm text-gray-400 text-center">Follow for updates</p>
-          </a>
+          {contactMethods.map(method => (
+            <ContactMethodCard key={method.id} {...method} />
+          ))}
         </div>
         
         {/* Additional Contact Options */}
@@ -83,53 +162,9 @@ const ContactForm = () => {
           <h3 className="text-xl font-medium text-white mb-4 text-center">More Ways to Connect</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Schedule a Call */}
-            <a 
-              href="https://calendly.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-4 rounded-lg bg-gray-900/50 border border-gray-800 hover:border-gray-700 transition-colors duration-300"
-            >
-              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                <Calendar className="text-emerald-400" size={18} />
-              </div>
-              <div>
-                <h4 className="text-white font-medium">Schedule a Call</h4>
-                <p className="text-xs text-gray-400">Book a time on my calendar</p>
-              </div>
-            </a>
-            
-            {/* Resume/CV */}
-            <a 
-              href="/resume.pdf" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-4 rounded-lg bg-gray-900/50 border border-gray-800 hover:border-gray-700 transition-colors duration-300"
-            >
-              <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                <FileText className="text-amber-400" size={18} />
-              </div>
-              <div>
-                <h4 className="text-white font-medium">Download CV</h4>
-                <p className="text-xs text-gray-400">Get my resume</p>
-              </div>
-            </a>
-            
-            {/* Discord */}
-            <a 
-              href="https://discord.gg/your-discord" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-4 rounded-lg bg-gray-900/50 border border-gray-800 hover:border-gray-700 transition-colors duration-300"
-            >
-              <div className="h-10 w-10 rounded-full bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
-                <MessageSquare className="text-indigo-400" size={18} />
-              </div>
-              <div>
-                <h4 className="text-white font-medium">Discord</h4>
-                <p className="text-xs text-gray-400">Join my community</p>
-              </div>
-            </a>
+            {additionalContacts.map(contact => (
+              <AdditionalContactCard key={contact.id} {...contact} />
+            ))}
           </div>
         </div>
         
