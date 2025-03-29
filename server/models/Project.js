@@ -47,7 +47,6 @@ const ProjectSchema = new mongoose.Schema({
   }
 });
 
-// Set updatedAt on save
 ProjectSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();

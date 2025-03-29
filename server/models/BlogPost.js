@@ -40,7 +40,6 @@ const BlogPostSchema = new mongoose.Schema({
   }
 });
 
-// Create slug from title
 BlogPostSchema.pre('save', function(next) {
   this.slug = this.title
     .toLowerCase()

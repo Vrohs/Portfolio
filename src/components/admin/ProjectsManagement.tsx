@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FolderKanban, Edit, Trash2, Plus, Eye, Star, ChevronUp, ChevronDown, CheckCircle, AlertCircle } from 'lucide-react';
-import { projectService } from '../../services/api';
+import { projectService, Project } from '../../services/api';
 
 const ProjectsManagement = () => {
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,7 +18,7 @@ const ProjectsManagement = () => {
     try {
       setIsLoading(true);
       const response = await projectService.getProjects();
-      setProjects(response.data);
+      setProjects(response.data || []);
       setError(null);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -28,7 +28,7 @@ const ProjectsManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
       try {
         await projectService.deleteProject(id);
@@ -51,9 +51,11 @@ const ProjectsManagement = () => {
     }
   };
 
-  const handleProgressUpdate = async (id, progress, change) => {
+  const handleProgressUpdate = async (id: string, progress: number | undefined, change: number) => {
+    // Handle case where progress is undefined by defaulting to 0
+    const currentProgress = progress ?? 0;
     // Ensure progress stays within 0-100 range
-    const newProgress = Math.min(Math.max(progress + change, 0), 100);
+    const newProgress = Math.min(Math.max(currentProgress + change, 0), 100);
     
     try {
       await projectService.updateProjectProgress(id, newProgress);
@@ -123,7 +125,7 @@ const ProjectsManagement = () => {
                 <tr className="border-b border-gray-800">
                   <th className="px-4 py-3 text-left">Title</th>
                   <th className="px-4 py-3 text-left">Progress</th>
-                  <th className="px-4 py-3 text-left">Tags</th>
+                  <th className="px-4 py-3 text-left">Technologies</th>
                   <th className="px-4 py-3 text-center">Featured</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
@@ -174,14 +176,14 @@ const ProjectsManagement = () => {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {project.tags && project.tags.slice(0, 2).map((tag, index) => (
+                          {project.technologies && project.technologies.slice(0, 2).map((tech, index: number) => (
                             <span key={index} className="px-2 py-1 bg-gray-800 text-xs rounded-full">
-                              {tag}
+                              {tech}
                             </span>
                           ))}
-                          {project.tags && project.tags.length > 2 && (
+                          {project.technologies && project.technologies.length > 2 && (
                             <span className="px-2 py-1 bg-gray-800 text-xs rounded-full">
-                              +{project.tags.length - 2}
+                              +{project.technologies.length - 2}
                             </span>
                           )}
                         </div>

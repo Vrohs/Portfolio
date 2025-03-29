@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-interface User {
+export interface User {
   _id: string;
   name: string;
   email: string;
   role: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   success: boolean;
   data: {
     token: string;
@@ -27,6 +27,33 @@ interface LoginData {
   password: string;
 }
 
+export interface Blog {
+  _id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  summary?: string; // Adding this for compatibility with BlogsManagement
+  tags: string[];
+  image?: string;
+  published: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  date: string;
+}
+
+export interface BlogsResponse {
+  success: boolean;
+  data: Blog[];
+  message?: string;
+}
+
+export interface BlogResponse {
+  success: boolean;
+  data: Blog;
+  message?: string;
+}
+
 interface BlogData {
   title: string;
   slug?: string;
@@ -35,6 +62,33 @@ interface BlogData {
   tags: string[];
   image?: File;
   published?: boolean;
+}
+
+export interface Project {
+  _id: string;
+  title: string;
+  description: string;
+  content?: string;
+  technologies: string[];
+  image?: string;
+  githubUrl?: string;
+  liveUrl?: string;
+  featured: boolean;
+  progress?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectsResponse {
+  success: boolean;
+  data: Project[];
+  message?: string;
+}
+
+export interface ProjectResponse {
+  success: boolean;
+  data: Project;
+  message?: string;
 }
 
 interface ProjectData {
@@ -54,6 +108,24 @@ interface ContactData {
   email: string;
   subject: string;
   message: string;
+}
+
+export interface Contact {
+  _id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  updatedAt: string;
+  date: string;
+}
+
+export interface ContactsResponse {
+  success: boolean;
+  data: Contact[];
+  message?: string;
 }
 
 const apiClient = axios.create({
@@ -129,10 +201,26 @@ export const authService = {
 };
 
 export const blogService = {
-  getBlogs: async (publishedOnly = true) => {
+  getBlogs: async (publishedOnly = true, page = 1, limit = 10) => {
     try {
-      const response = await apiClient.get(`/blogs${publishedOnly ? '?published=true' : ''}`);
-      return response.data;
+      const queryParams = new URLSearchParams();
+      if (publishedOnly) {
+        queryParams.append('published', 'true');
+      }
+      queryParams.append('page', page.toString());
+      queryParams.append('limit', limit.toString());
+      
+      const response = await apiClient.get(`/blogs?${queryParams.toString()}`);
+      
+      // Return data structure compatible with the component
+      return {
+        data: response.data.blogs || [],
+        pagination: {
+          totalPages: response.data.totalPages || 1,
+          currentPage: response.data.currentPage || 1,
+          totalBlogs: response.data.totalBlogs || 0
+        }
+      };
     } catch (error) {
       console.error('Error fetching blogs:', error);
       throw error;
@@ -223,7 +311,7 @@ export const blogService = {
 };
 
 export const projectService = {
-  getProjects: async (featuredOnly = false) => {
+  getProjects: async (featuredOnly = false): Promise<ProjectsResponse> => {
     try {
       const response = await apiClient.get(`/projects${featuredOnly ? '?featured=true' : ''}`);
       return response.data;
@@ -233,7 +321,7 @@ export const projectService = {
     }
   },
   
-  getProject: async (id: string) => {
+  getProject: async (id: string): Promise<ProjectResponse> => {
     try {
       const response = await apiClient.get(`/projects/${id}`);
       return response.data;
@@ -243,30 +331,25 @@ export const projectService = {
     }
   },
   
-  createProject: async (projectData: ProjectData) => {
+  createProject: async (projectData: ProjectData): Promise<ProjectResponse> => {
     try {
       const formData = new FormData();
       
-      Object.keys(projectData).forEach(key => {
-        if (key !== 'image') {
-          if (key === 'technologies' && Array.isArray(projectData[key])) {
-            formData.append(key, JSON.stringify(projectData[key]));
-          } else {
-            formData.append(key, projectData[key as keyof ProjectData] as string);
-          }
+      Object.entries(projectData).forEach(([key, value]) => {
+        if (key === 'technologies' && Array.isArray(value)) {
+          value.forEach(tech => formData.append('technologies[]', tech));
+        } else if (key === 'image' && value instanceof File) {
+          formData.append('image', value);
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
         }
       });
-      
-      if (projectData.image && projectData.image instanceof File) {
-        formData.append('image', projectData.image);
-      }
       
       const response = await apiClient.post('/projects', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
-      
       return response.data;
     } catch (error) {
       console.error('Error creating project:', error);
@@ -274,30 +357,25 @@ export const projectService = {
     }
   },
   
-  updateProject: async (id: string, projectData: ProjectData) => {
+  updateProject: async (id: string, projectData: ProjectData): Promise<ProjectResponse> => {
     try {
       const formData = new FormData();
       
-      Object.keys(projectData).forEach(key => {
-        if (key !== 'image') {
-          if (key === 'technologies' && Array.isArray(projectData[key])) {
-            formData.append(key, JSON.stringify(projectData[key]));
-          } else {
-            formData.append(key, projectData[key as keyof ProjectData] as string);
-          }
+      Object.entries(projectData).forEach(([key, value]) => {
+        if (key === 'technologies' && Array.isArray(value)) {
+          value.forEach(tech => formData.append('technologies[]', tech));
+        } else if (key === 'image' && value instanceof File) {
+          formData.append('image', value);
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
         }
       });
-      
-      if (projectData.image && projectData.image instanceof File) {
-        formData.append('image', projectData.image);
-      }
       
       const response = await apiClient.put(`/projects/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
-      
       return response.data;
     } catch (error) {
       console.error(`Error updating project ${id}:`, error);
@@ -305,7 +383,7 @@ export const projectService = {
     }
   },
   
-  updateProjectProgress: async (id: string, progress: number) => {
+  updateProjectProgress: async (id: string, progress: number): Promise<ProjectResponse> => {
     try {
       const response = await apiClient.patch(`/projects/${id}/progress`, { progress });
       return response.data;
@@ -315,7 +393,7 @@ export const projectService = {
     }
   },
   
-  deleteProject: async (id: string) => {
+  deleteProject: async (id: string): Promise<{ success: boolean, message: string }> => {
     try {
       const response = await apiClient.delete(`/projects/${id}`);
       return response.data;
@@ -340,7 +418,10 @@ export const contactService = {
   getContacts: async () => {
     try {
       const response = await apiClient.get('/contact');
-      return response.data;
+      return {
+        data: Array.isArray(response.data) ? response.data : 
+              response.data.contacts ? response.data.contacts : [],
+      };
     } catch (error) {
       console.error('Error fetching contacts:', error);
       throw error;

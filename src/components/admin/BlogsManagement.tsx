@@ -1,32 +1,58 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Edit, Trash2, Plus, Eye, Clock, CheckCircle, AlertCircle, Search, Filter } from 'lucide-react';
+import { FileText, Edit, Trash2, Plus, Eye, Clock, CheckCircle, AlertCircle, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { blogService } from '../../services/api';
 
 const BlogsManagement = () => {
-  const [blogs, setBlogs] = useState([]);
+  interface Blog {
+    _id: string;
+    title: string;
+    slug: string;
+    summary?: string;
+    published: boolean;
+    date: string;
+  }
+  
+  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all'); // 'all', 'published', 'draft'
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [blogToDelete, setBlogToDelete] = useState(null);
-  const [deleteStatus, setDeleteStatus] = useState({ loading: false, error: null });
+  const [blogToDelete, setBlogToDelete] = useState<Blog | null>(null);
+  const [deleteStatus, setDeleteStatus] = useState<{ loading: boolean; error: string | null }>({ loading: false, error: null });
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const blogsPerPage = 10;
   
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchBlogs();
-  }, []);
+  }, [currentPage, filter]);
 
   const fetchBlogs = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await blogService.getBlogs(false); // Get all blogs including drafts
+      // Determine if we should fetch published-only based on filter
+      const publishedOnly = filter === 'published';
+      const includeAll = filter === 'all';
+      
+      // Get blogs with pagination
+      const response = await blogService.getBlogs(
+        includeAll ? false : publishedOnly, 
+        currentPage, 
+        blogsPerPage
+      );
+      
       setBlogs(response.data);
+      setTotalPages(response.pagination.totalPages);
+      setHasMore(currentPage < response.pagination.totalPages);
     } catch (err) {
       console.error('Error fetching blogs:', err);
       setError('Failed to load blogs. Please try again.');
@@ -39,15 +65,15 @@ const BlogsManagement = () => {
     navigate('/admin/blogs/new');
   };
 
-  const handleEditBlog = (id) => {
+  const handleEditBlog = (id: string) => {
     navigate(`/admin/blogs/edit/${id}`);
   };
 
-  const handleViewBlog = (slug) => {
+  const handleViewBlog = (slug: string) => {
     window.open(`/blog/${slug}`, '_blank');
   };
 
-  const confirmDelete = (blog) => {
+  const confirmDelete = (blog: Blog) => {
     setBlogToDelete(blog);
     setShowDeleteModal(true);
   };
@@ -73,53 +99,49 @@ const BlogsManagement = () => {
     }
   };
 
-  const handlePublishToggle = async (blog) => {
+  const handlePublishToggle = async (blog: Blog) => {
     try {
-      const updatedBlog = { ...blog, published: !blog.published };
+      //full blog data first
+      const fullBlog = await blogService.getBlog(blog._id);
+      const updatedBlog = { ...fullBlog, published: !blog.published };
       await blogService.updateBlog(blog._id, updatedBlog);
       
-      // Update local state
+      // Updating local state
       setBlogs(blogs.map(b => 
         b._id === blog._id ? { ...b, published: !b.published } : b
       ));
       
       showToast(`Blog ${updatedBlog.published ? 'published' : 'unpublished'} successfully`);
     } catch (err) {
-      console.error('Error updating blog publish status:', err);
-      showToast('Failed to update publish status', false);
+      console.error('Error toggling publish status:', err);
+      showToast('Failed to update publish status', 'error');
     }
   };
-  
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  };
-  
-  const showToast = (message, success = true) => {
-    setToastMessage(message);
-    setShowSuccessToast(success);
-    setTimeout(() => {
-      setShowSuccessToast(false);
-      setToastMessage('');
-    }, 3000);
+
+  // Pagination handlers
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
   };
 
-  const filteredBlogs = blogs
-    .filter(blog => {
-      // Apply search term filter
-      if (searchTerm && !blog.title.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-      // Apply published/draft filter
-      if (filter === 'published' && !blog.published) return false;
-      if (filter === 'draft' && blog.published) return false;
-      return true;
-    })
-    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (newest first)
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
+
+  const showToast = (message: string, type = 'success') => {
+    setToastMessage(message);
+    setShowSuccessToast(true);
+    setTimeout(() => setShowSuccessToast(false), 3000);
+  };
+
+  // Filter blogs based on search term
+  const filteredBlogs = blogs.filter(blog => 
+    blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (blog.summary?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -351,8 +373,58 @@ const BlogsManagement = () => {
           {toastMessage}
         </div>
       )}
+      
+      {/* Pagination Controls */}
+      {!isLoading && !error && filteredBlogs.length > 0 && (
+        <div className="flex items-center justify-between mt-6">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage <= 1}
+            className={`flex items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+              currentPage <= 1
+                ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-800 hover:bg-gray-700 text-white'
+            }`}
+          >
+            <ChevronLeft size={18} />
+            Previous
+          </button>
+          
+          <div className="text-sm text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
+          
+          {hasMore && (
+            <button
+              onClick={handleNextPage}
+              className="flex items-center gap-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            >
+              Continue to iterate?
+              <ChevronRight size={18} />
+            </button>
+          )}
+          
+          {!hasMore && (
+            <button
+              disabled
+              className="flex items-center gap-1 px-4 py-2 bg-gray-800 text-gray-500 rounded-lg cursor-not-allowed"
+            >
+              No more pages
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
+};
+
+const formatDate = (dateString: string | number | Date) => {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(date);
 };
 
 export default BlogsManagement;

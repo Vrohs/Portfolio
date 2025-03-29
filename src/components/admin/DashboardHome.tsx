@@ -1,10 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, FolderKanban, MessageSquare, Users, ArrowRight, Clock, Plus, Star } from 'lucide-react';
-import { blogService, projectService, contactService } from '../../services/api';
+import { blogService, projectService, contactService, Blog, Project, Contact } from '../../services/api';
+
+interface Stats {
+  totalBlogs: number;
+  draftBlogs: number;
+  totalProjects: number;
+  featuredProjects: number;
+  totalMessages: number;
+  unreadMessages: number;
+}
+
+interface StatCardProps {
+  icon: React.ReactNode;
+  title: string;
+  value: number;
+  color: string;
+  onClick: () => void;
+}
 
 const DashboardHome = () => {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<Stats>({
     totalBlogs: 0,
     draftBlogs: 0,
     totalProjects: 0,
@@ -12,8 +29,8 @@ const DashboardHome = () => {
     totalMessages: 0,
     unreadMessages: 0,
   });
-  const [recentBlogs, setRecentBlogs] = useState([]);
-  const [recentMessages, setRecentMessages] = useState([]);
+  const [recentBlogs, setRecentBlogs] = useState<Blog[]>([]);
+  const [recentMessages, setRecentMessages] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -34,15 +51,15 @@ const DashboardHome = () => {
         
         setStats({
           totalBlogs: blogs.length,
-          draftBlogs: blogs.filter(blog => !blog.published).length,
+          draftBlogs: blogs.filter((blog: Blog) => !blog.published).length,
           totalProjects: projects.length,
           featuredProjects: projects.filter(project => project.featured).length,
           totalMessages: messages.length,
-          unreadMessages: messages.filter(message => !message.read).length,
+          unreadMessages: messages.filter((message: Contact) => !message.read).length,
         });
         
-        setRecentBlogs(blogs.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5));
-        setRecentMessages(messages.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5));
+        setRecentBlogs(blogs.sort((a: Blog, b: Blog) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5));
+        setRecentMessages(messages.sort((a: Contact, b: Contact) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5));
         
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -54,7 +71,7 @@ const DashboardHome = () => {
     fetchDashboardData();
   }, []);
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
@@ -63,7 +80,7 @@ const DashboardHome = () => {
     });
   };
 
-  const StatCard = ({ icon, title, value, color, onClick }) => (
+  const StatCard: React.FC<StatCardProps> = ({ icon, title, value, color, onClick }) => (
     <div 
       onClick={onClick}
       className={`relative group overflow-hidden cursor-pointer`}

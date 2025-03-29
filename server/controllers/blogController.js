@@ -3,11 +3,22 @@ import BlogPost from '../models/BlogPost.js';
 export const getBlogs = async (req, res) => {
   try {
     const query = req.query.published ? { published: true } : {};
-    const blogs = await BlogPost.find(query).sort({ date: -1 });
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+    
+    const totalPosts = await BlogPost.countDocuments(query);
+    const blogs = await BlogPost.find(query)
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
     
     res.status(200).json({
       success: true,
       count: blogs.length,
+      totalCount: totalPosts,
+      totalPages: Math.ceil(totalPosts / limit),
+      currentPage: page,
       data: blogs
     });
   } catch (error) {

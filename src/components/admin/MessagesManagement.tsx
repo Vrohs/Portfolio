@@ -1,24 +1,15 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Trash2, CheckCircle, AlertCircle, Mail, Clock, Check } from 'lucide-react';
-import { contactService } from '../../services/api';
+import { contactService, Contact } from '../../services/api';
 
-// Define the interface for a message/contact
-interface Message {
-  _id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  date: string;
-  read: boolean;
-}
+// Using the Contact interface from api.ts instead of defining a separate Message interface
 
 const MessagesManagement = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [activeMessage, setActiveMessage] = useState<Message | null>(null);
+  const [activeMessage, setActiveMessage] = useState<Contact | null>(null);
 
   useEffect(() => {
     fetchMessages();
@@ -97,7 +88,7 @@ const MessagesManagement = () => {
     }
   };
 
-  const openMessage = async (message: Message) => {
+  const openMessage = async (message: Contact) => {
     setActiveMessage(message);
     
     // If message is unread, mark it as read
