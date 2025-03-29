@@ -1,14 +1,10 @@
 import Contact from '../models/Contact.js';
 import nodemailer from 'nodemailer';
 
-// @desc    Submit contact form
-// @route   POST /api/contact
-// @access  Public
 export const submitContact = async (req, res) => {
   try {
     const contact = await Contact.create(req.body);
 
-    // Optional: Send email notification
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       sendEmailNotification(contact);
     }
@@ -33,9 +29,6 @@ export const submitContact = async (req, res) => {
   }
 };
 
-// @desc    Get all contact submissions
-// @route   GET /api/contact
-// @access  Private
 export const getContacts = async (req, res) => {
   try {
     const contacts = await Contact.find().sort({ date: -1 });
@@ -53,9 +46,6 @@ export const getContacts = async (req, res) => {
   }
 };
 
-// @desc    Mark contact as read
-// @route   PUT /api/contact/:id
-// @access  Private
 export const markAsRead = async (req, res) => {
   try {
     let contact = await Contact.findById(req.params.id);
@@ -85,10 +75,8 @@ export const markAsRead = async (req, res) => {
   }
 };
 
-// Helper function to send email notification
 const sendEmailNotification = async (contact) => {
   try {
-    // Create transporter
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -97,10 +85,9 @@ const sendEmailNotification = async (contact) => {
       }
     });
 
-    // Set up email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER, // Send to yourself
+      to: process.env.EMAIL_USER,
       subject: `New Contact Form Submission: ${contact.subject}`,
       text: `
         Name: ${contact.name}
@@ -112,7 +99,6 @@ const sendEmailNotification = async (contact) => {
       `
     };
 
-    // Send email
     await transporter.sendMail(mailOptions);
   } catch (error) {
     console.error('Email notification failed:', error);

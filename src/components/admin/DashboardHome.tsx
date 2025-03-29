@@ -22,14 +22,12 @@ const DashboardHome = () => {
       try {
         setIsLoading(true);
         
-        // Fetch stats
         const [blogsResponse, projectsResponse, messagesResponse] = await Promise.all([
-          blogService.getBlogs(false), // Get all blogs including drafts
+          blogService.getBlogs(false),
           projectService.getProjects(),
           contactService.getContacts()
         ]);
         
-        // Calculate stats
         const blogs = blogsResponse.data;
         const projects = projectsResponse.data;
         const messages = messagesResponse.data;
@@ -43,7 +41,6 @@ const DashboardHome = () => {
           unreadMessages: messages.filter(message => !message.read).length,
         });
         
-        // Set recent blogs and messages (latest 5)
         setRecentBlogs(blogs.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5));
         setRecentMessages(messages.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5));
         
@@ -57,7 +54,6 @@ const DashboardHome = () => {
     fetchDashboardData();
   }, []);
 
-  // Format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -67,7 +63,6 @@ const DashboardHome = () => {
     });
   };
 
-  // Stat card component
   const StatCard = ({ icon, title, value, color, onClick }) => (
     <div 
       onClick={onClick}

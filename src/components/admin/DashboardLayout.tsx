@@ -22,7 +22,7 @@ const DashboardLayout = () => {
   ];
   
   // Check if current path matches navigation item
-  const isActivePath = (path) => {
+  const isActivePath = (path: string) => {
     if (path === '/admin' && location.pathname === '/admin') {
       return true;
     }

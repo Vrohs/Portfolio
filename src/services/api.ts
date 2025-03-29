@@ -1,6 +1,61 @@
 import axios from 'axios';
 
-// Create axios instance with base URL
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface AuthResponse {
+  success: boolean;
+  data: {
+    token: string;
+    user: User;
+  };
+  message?: string;
+}
+
+interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+}
+
+interface LoginData {
+  email: string;
+  password: string;
+}
+
+interface BlogData {
+  title: string;
+  slug?: string;
+  content: string;
+  excerpt: string;
+  tags: string[];
+  image?: File;
+  published?: boolean;
+}
+
+interface ProjectData {
+  title: string;
+  description: string;
+  content?: string;
+  technologies: string[];
+  image?: File;
+  githubUrl?: string;
+  liveUrl?: string;
+  featured?: boolean;
+  progress?: number;
+}
+
+interface ContactData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
 const apiClient = axios.create({
   baseURL: 'http://localhost:5000/api',
   headers: {
@@ -8,7 +63,6 @@ const apiClient = axios.create({
   }
 });
 
-// Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -20,12 +74,10 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Auth services
 export const authService = {
-  // Register user
-  register: async (userData) => {
+  register: async (userData: RegisterData) => {
     try {
-      const response = await apiClient.post('/auth/register', userData);
+      const response = await apiClient.post<AuthResponse>('/auth/register', userData);
       if (response.data.success) {
         localStorage.setItem('authToken', response.data.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.data));
@@ -37,10 +89,9 @@ export const authService = {
     }
   },
   
-  // Login user
-  login: async (credentials) => {
+  login: async (credentials: LoginData) => {
     try {
-      const response = await apiClient.post('/auth/login', credentials);
+      const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
       if (response.data.success) {
         localStorage.setItem('authToken', response.data.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.data));
@@ -52,24 +103,20 @@ export const authService = {
     }
   },
   
-  // Logout user
   logout: () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
   },
   
-  // Check if user is authenticated
   isAuthenticated: () => {
     return !!localStorage.getItem('authToken');
   },
   
-  // Get current user
   getCurrentUser: () => {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   },
   
-  // Get user profile
   getProfile: async () => {
     try {
       const response = await apiClient.get('/auth/me');
@@ -81,9 +128,7 @@ export const authService = {
   }
 };
 
-// Blog services
 export const blogService = {
-  // Get all blogs (with optional filter for published only)
   getBlogs: async (publishedOnly = true) => {
     try {
       const response = await apiClient.get(`/blogs${publishedOnly ? '?published=true' : ''}`);
@@ -94,8 +139,7 @@ export const blogService = {
     }
   },
   
-  // Get single blog by slug
-  getBlog: async (slug) => {
+  getBlog: async (slug: string) => {
     try {
       const response = await apiClient.get(`/blogs/${slug}`);
       return response.data;
@@ -105,23 +149,20 @@ export const blogService = {
     }
   },
   
-  // Create new blog
-  createBlog: async (blogData) => {
+  createBlog: async (blogData: BlogData) => {
     try {
       const formData = new FormData();
       
-      // Append text fields
       Object.keys(blogData).forEach(key => {
         if (key !== 'image') {
           if (key === 'tags' && Array.isArray(blogData[key])) {
             formData.append(key, JSON.stringify(blogData[key]));
           } else {
-            formData.append(key, blogData[key]);
+            formData.append(key, blogData[key as keyof BlogData] as string);
           }
         }
       });
       
-      // Append image if exists
       if (blogData.image && blogData.image instanceof File) {
         formData.append('image', blogData.image);
       }
@@ -139,23 +180,20 @@ export const blogService = {
     }
   },
   
-  // Update blog
-  updateBlog: async (id, blogData) => {
+  updateBlog: async (id: string, blogData: BlogData) => {
     try {
       const formData = new FormData();
       
-      // Append text fields
       Object.keys(blogData).forEach(key => {
         if (key !== 'image') {
           if (key === 'tags' && Array.isArray(blogData[key])) {
             formData.append(key, JSON.stringify(blogData[key]));
           } else {
-            formData.append(key, blogData[key]);
+            formData.append(key, blogData[key as keyof BlogData] as string);
           }
         }
       });
       
-      // Append image if exists
       if (blogData.image && blogData.image instanceof File) {
         formData.append('image', blogData.image);
       }
@@ -173,8 +211,7 @@ export const blogService = {
     }
   },
   
-  // Delete blog
-  deleteBlog: async (id) => {
+  deleteBlog: async (id: string) => {
     try {
       const response = await apiClient.delete(`/blogs/${id}`);
       return response.data;
@@ -185,9 +222,7 @@ export const blogService = {
   }
 };
 
-// Project services
 export const projectService = {
-  // Get all projects (with optional filter for featured only)
   getProjects: async (featuredOnly = false) => {
     try {
       const response = await apiClient.get(`/projects${featuredOnly ? '?featured=true' : ''}`);
@@ -198,8 +233,7 @@ export const projectService = {
     }
   },
   
-  // Get single project by id
-  getProject: async (id) => {
+  getProject: async (id: string) => {
     try {
       const response = await apiClient.get(`/projects/${id}`);
       return response.data;
@@ -209,23 +243,20 @@ export const projectService = {
     }
   },
   
-  // Create new project
-  createProject: async (projectData) => {
+  createProject: async (projectData: ProjectData) => {
     try {
       const formData = new FormData();
       
-      // Append text fields
       Object.keys(projectData).forEach(key => {
         if (key !== 'image') {
-          if (key === 'tags' && Array.isArray(projectData[key])) {
+          if (key === 'technologies' && Array.isArray(projectData[key])) {
             formData.append(key, JSON.stringify(projectData[key]));
           } else {
-            formData.append(key, projectData[key]);
+            formData.append(key, projectData[key as keyof ProjectData] as string);
           }
         }
       });
       
-      // Append image if exists
       if (projectData.image && projectData.image instanceof File) {
         formData.append('image', projectData.image);
       }
@@ -243,23 +274,20 @@ export const projectService = {
     }
   },
   
-  // Update project
-  updateProject: async (id, projectData) => {
+  updateProject: async (id: string, projectData: ProjectData) => {
     try {
       const formData = new FormData();
       
-      // Append text fields
       Object.keys(projectData).forEach(key => {
         if (key !== 'image') {
-          if (key === 'tags' && Array.isArray(projectData[key])) {
+          if (key === 'technologies' && Array.isArray(projectData[key])) {
             formData.append(key, JSON.stringify(projectData[key]));
           } else {
-            formData.append(key, projectData[key]);
+            formData.append(key, projectData[key as keyof ProjectData] as string);
           }
         }
       });
       
-      // Append image if exists
       if (projectData.image && projectData.image instanceof File) {
         formData.append('image', projectData.image);
       }
@@ -277,8 +305,7 @@ export const projectService = {
     }
   },
   
-  // Update project progress
-  updateProjectProgress: async (id, progress) => {
+  updateProjectProgress: async (id: string, progress: number) => {
     try {
       const response = await apiClient.patch(`/projects/${id}/progress`, { progress });
       return response.data;
@@ -288,8 +315,7 @@ export const projectService = {
     }
   },
   
-  // Delete project
-  deleteProject: async (id) => {
+  deleteProject: async (id: string) => {
     try {
       const response = await apiClient.delete(`/projects/${id}`);
       return response.data;
@@ -300,10 +326,8 @@ export const projectService = {
   }
 };
 
-// Contact service
 export const contactService = {
-  // Submit contact form
-  submitContact: async (contactData) => {
+  submitContact: async (contactData: ContactData) => {
     try {
       const response = await apiClient.post('/contact', contactData);
       return response.data;
@@ -313,7 +337,6 @@ export const contactService = {
     }
   },
   
-  // Get all contacts (admin only)
   getContacts: async () => {
     try {
       const response = await apiClient.get('/contact');
@@ -324,13 +347,22 @@ export const contactService = {
     }
   },
   
-  // Mark contact as read (admin only)
-  markAsRead: async (id) => {
+  markAsRead: async (id: string) => {
     try {
       const response = await apiClient.put(`/contact/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error marking contact ${id} as read:`, error);
+      throw error;
+    }
+  },
+  
+  deleteContact: async (id: string) => {
+    try {
+      const response = await apiClient.delete(`/contact/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting contact ${id}:`, error);
       throw error;
     }
   }

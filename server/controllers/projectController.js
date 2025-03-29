@@ -1,11 +1,7 @@
 import Project from '../models/Project.js';
 
-// @desc    Get all projects
-// @route   GET /api/projects
-// @access  Public
 export const getProjects = async (req, res) => {
   try {
-    // Allow filtering for featured projects
     const query = req.query.featured ? { featured: true } : {};
     const projects = await Project.find(query).sort({ createdAt: -1 });
     
@@ -22,9 +18,6 @@ export const getProjects = async (req, res) => {
   }
 };
 
-// @desc    Get single project
-// @route   GET /api/projects/:id
-// @access  Public
 export const getProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
@@ -48,12 +41,8 @@ export const getProject = async (req, res) => {
   }
 };
 
-// @desc    Create new project
-// @route   POST /api/projects
-// @access  Private
 export const createProject = async (req, res) => {
   try {
-    // Handle image upload if included
     if (req.file) {
       req.body.image = req.file.filename;
     }
@@ -80,12 +69,8 @@ export const createProject = async (req, res) => {
   }
 };
 
-// @desc    Update project
-// @route   PUT /api/projects/:id
-// @access  Private
 export const updateProject = async (req, res) => {
   try {
-    // Handle image upload if included
     if (req.file) {
       req.body.image = req.file.filename;
     }
@@ -124,9 +109,6 @@ export const updateProject = async (req, res) => {
   }
 };
 
-// @desc    Update project progress
-// @route   PATCH /api/projects/:id/progress
-// @access  Private
 export const updateProgress = async (req, res) => {
   try {
     const { progress } = req.body;
@@ -168,9 +150,6 @@ export const updateProgress = async (req, res) => {
   }
 };
 
-// @desc    Delete project
-// @route   DELETE /api/projects/:id
-// @access  Private
 export const deleteProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);

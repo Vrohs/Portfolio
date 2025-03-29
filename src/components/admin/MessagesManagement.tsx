@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react';
-import { MessageSquare, Eye, Trash2, CheckCircle, AlertCircle, Mail, Clock, Check } from 'lucide-react';
+import { MessageSquare, Trash2, CheckCircle, AlertCircle, Mail, Clock, Check } from 'lucide-react';
 import { contactService } from '../../services/api';
 
+// Define the interface for a message/contact
+interface Message {
+  _id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  date: string;
+  read: boolean;
+}
+
 const MessagesManagement = () => {
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [activeMessage, setActiveMessage] = useState(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activeMessage, setActiveMessage] = useState<Message | null>(null);
 
   useEffect(() => {
     fetchMessages();
@@ -27,7 +38,7 @@ const MessagesManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
       try {
         await contactService.deleteContact(id);
@@ -55,7 +66,7 @@ const MessagesManagement = () => {
     }
   };
 
-  const handleMarkAsRead = async (id) => {
+  const handleMarkAsRead = async (id: string) => {
     try {
       await contactService.markAsRead(id);
       
@@ -86,7 +97,7 @@ const MessagesManagement = () => {
     }
   };
 
-  const openMessage = async (message) => {
+  const openMessage = async (message: Message) => {
     setActiveMessage(message);
     
     // If message is unread, mark it as read
@@ -96,7 +107,7 @@ const MessagesManagement = () => {
   };
 
   // Format date
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 

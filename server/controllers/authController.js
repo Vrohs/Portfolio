@@ -1,21 +1,16 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-// Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'portfoliosecret123', {
     expiresIn: '30d'
   });
 };
 
-// @desc    Register a new admin user
-// @route   POST /api/auth/register
-// @access  Public (should be restricted in production)
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check if user exists
     const userExists = await User.findOne({ email });
 
     if (userExists) {
@@ -25,7 +20,6 @@ export const register = async (req, res) => {
       });
     }
 
-    // Create user
     const user = await User.create({
       name,
       email,
@@ -56,14 +50,10 @@ export const register = async (req, res) => {
   }
 };
 
-// @desc    Authenticate a user
-// @route   POST /api/auth/login
-// @access  Public
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check for user email
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
@@ -73,7 +63,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Match password
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
@@ -100,9 +89,6 @@ export const login = async (req, res) => {
   }
 };
 
-// @desc    Get current logged in user
-// @route   GET /api/auth/me
-// @access  Private
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);

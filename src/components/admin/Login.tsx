@@ -2,10 +2,15 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { User, Key, AlertCircle } from 'lucide-react';
 import { authService } from '../../services/api';
+import axios, { AxiosError } from 'axios';
 
 interface LoginFormData {
   email: string;
   password: string;
+}
+
+interface ErrorResponse {
+  error: string;
 }
 
 const Login = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
@@ -21,8 +26,13 @@ const Login = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
     try {
       await authService.login(data);
       onLoginSuccess();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to login. Please check your credentials.');
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError<ErrorResponse>;
+        setError(axiosError.response?.data?.error || 'Failed to login. Please check your credentials.');
+      } else {
+        setError('Failed to login. Please check your credentials.');
+      }
     } finally {
       setIsSubmitting(false);
     }
