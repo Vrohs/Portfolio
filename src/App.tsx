@@ -1,14 +1,21 @@
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services/api';
 import Login from './components/admin/Login';
 import DashboardLayout from './components/admin/DashboardLayout';
 import DashboardHome from './components/admin/DashboardHome';
+import BlogsManagement from './components/admin/BlogsManagement';
+import ProjectsManagement from './components/admin/ProjectsManagement';
+import MessagesManagement from './components/admin/MessagesManagement';
 import { Github, Linkedin, Twitter, Mail, Code2, Trophy, BookOpen, ExternalLink, FileText, GitPullRequest, Clock } from 'lucide-react';
 import ContactForm from './components/ContactForm';
 
 // Protected route component
-const ProtectedRoute = ({ children }) => {
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const isAuthenticated = authService.isAuthenticated();
   
   if (!isAuthenticated) {
@@ -41,7 +48,42 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<DashboardHome />} />
-          {/* Add more admin routes here */}
+          
+          {/* Blog Management Routes */}
+          <Route path="blogs" element={<BlogsManagement />} />
+          <Route path="blogs/new" element={<div className="p-6 bg-gray-900 rounded-lg">
+            <h2 className="text-2xl font-bold mb-6">Create New Blog Post</h2>
+            {/* Blog creation form will be implemented here */}
+            <p className="text-gray-400">Blog creation form will be implemented here</p>
+          </div>} />
+          <Route path="blogs/edit/:id" element={<div className="p-6 bg-gray-900 rounded-lg">
+            <h2 className="text-2xl font-bold mb-6">Edit Blog Post</h2>
+            {/* Blog edit form will be implemented here */}
+            <p className="text-gray-400">Blog edit form will be implemented here</p>
+          </div>} />
+          
+          {/* Project Management Routes */}
+          <Route path="projects" element={<ProjectsManagement />} />
+          <Route path="projects/new" element={<div className="p-6 bg-gray-900 rounded-lg">
+            <h2 className="text-2xl font-bold mb-6">Create New Project</h2>
+            {/* Project creation form will be implemented here */}
+            <p className="text-gray-400">Project creation form will be implemented here</p>
+          </div>} />
+          <Route path="projects/edit/:id" element={<div className="p-6 bg-gray-900 rounded-lg">
+            <h2 className="text-2xl font-bold mb-6">Edit Project</h2>
+            {/* Project edit form will be implemented here */}
+            <p className="text-gray-400">Project edit form will be implemented here</p>
+          </div>} />
+          
+          {/* Messages Management Route */}
+          <Route path="messages" element={<MessagesManagement />} />
+          
+          {/* Settings Route */}
+          <Route path="settings" element={<div className="p-6 bg-gray-900 rounded-lg">
+            <h2 className="text-2xl font-bold mb-6">Admin Settings</h2>
+            {/* Settings form will be implemented here */}
+            <p className="text-gray-400">Settings form will be implemented here</p>
+          </div>} />
         </Route>
         
         {/* Public Portfolio Route */}
